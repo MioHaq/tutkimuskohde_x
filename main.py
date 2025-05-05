@@ -1,64 +1,66 @@
 import pygame as pg
 
-class Player:
-    """Käsittelee pelaajan informaatiota, kuten sijaintia ja elämäpisteiden määrää."""
-    def __init__(self) -> None:
-        self.x: int = 5
-        self.y: int = 3
-        self.health: int = 100
 
-    def hit(self) -> None:
-        self.health -= 15
-
-    def move(self, x: int, y: int) -> None:
-        self.x += x
-        self.y += y
-
-    def draw(self, window: pg.surface.Surface, image: pg.surface.Surface) -> None:
-        window.blit(image, (self.x * 50, self.y * 50))
+### NOTE: Peliprojektini vuoden 2025 Ohjelmoinnin jatkokurssia varten.
+###       Pelissä pelaat musitinsa menettänyttä hahmoa, jonka täytyy löytää
+###       kaikki kadonneet muistot paetakseen ulos. Lisäksi pelaajan on
+###       voitettava robottivartijat, jotka yrittävät estää sinua keräämästä
+###       muistoja.
 
 
 class Game:
     def __init__(self) -> None:
+        pg.init()
         pg.display.set_caption('Tutkimuskohde X')
 
         self.load_images()
         self.clock = pg.time.Clock()
-        self.grid_size = 50
+        self.grid_size = 50             # yhden ruudun leveys pikseleinä
         
         self.w_window = 1920
         self.h_window = 1080
         self.window = pg.display.set_mode((self.w_window, self.h_window))
-        
-        self.player = Player()
 
         self.start_game()
 
     
     def start_game(self) -> None:
-        room1 = [
+        # alustetaan huoneet
+        # 0 = tyhjä ruutu
+        # 1 = seinä
+        # 2 = muisto
+        # 3 = ovi
+        # 4 = vihollinen
+        room0 = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1],
+            [1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 4, 0, 1],
+            [1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1]
         ]
+        room1 = [...]
         room2 = [...]
-        room3 = [...]
 
-        self.rooms = [room1, room2, room3]
+        self.rooms = [room0, room1, room2]
+        self.memory_counts = [4, 0, 0]
+        self.current_room = 0
+
+        self.player = {
+            'x': 5,
+            'y': 3,
+            'health': 10
+        }
+        self.memories = 0
 
         self.main_loop()
 
@@ -77,26 +79,73 @@ class Game:
             if event.type == pg.QUIT:
                 pg.quit()
                 exit()
-
+            
+            # käsitellään näppäinkomennot ja liikutetaan hahmoa niiden mukaisesti
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_a:
-                    self.player.move(-1, 0)
+                    self.move_player(-1, 0)
                 if event.key == pg.K_d:
-                    self.player.move(1, 0)
+                    self.move_player(1, 0)
                 if event.key == pg.K_w:
-                    self.player.move(0, -1)
+                    self.move_player(0, -1)
                 if event.key == pg.K_s:
-                    self.player.move(0, 1)
+                    self.move_player(0, 1)
 
             if event.type == pg.MOUSEBUTTONDOWN:
                 ...
 
 
     def draw_room(self) -> None:
-        for i in range(len(self.rooms[0])):
-            for j in range(len(self.rooms[0][i])):
-                if self.rooms[0][i][j] == 1:
-                    pg.draw.rect(self.window, (0,0,0), pg.rect.Rect(j*50, i*50, 50, 50))
+        """Piirtää huoneen."""
+        # huomioi, että silmukoiden järjestyksen vuoksi 'i' kuvastaa y-akselia ja 'j' kuvastaa x-akselia!
+        for i in range(len(self.rooms[self.current_room])):
+            for j in range(len(self.rooms[self.current_room][i])):
+                
+                # jos ruudun koodi on 1, se on osa seinää (jolloin kohdalle piirretään koko ruudun täyttävä neliö)
+                if self.rooms[self.current_room][i][j] == 1:
+                    pg.draw.rect(self.window, (0,0,0), pg.rect.Rect(j*self.grid_size, i*self.grid_size, self.grid_size, self.grid_size))
+                
+                # jos ruudun koodi on 2, se on kolikko, joten kohdalle piirretään kolikkokuva
+                elif self.rooms[self.current_room][i][j] == 2:
+                    self.window.blit(self.coin_im, (j*self.grid_size, i*self.grid_size))
+
+                # jos ruudun koodi on 3, se on ovi, joten kohdalle piirretään ovi
+                elif self.rooms[self.current_room][i][j] == 3:
+                    self.window.blit(self.door_im, (j*self.grid_size, i*self.grid_size))
+
+                # jos ruudun koodi on 4, se on vihollinen, joten kohtaan piirretään robotti
+                elif self.rooms[self.current_room][i][j] == 4:
+                    self.window.blit(self.robo_im, (j*self.grid_size, i*self.grid_size))
+
+
+    def draw_player(self) -> None:
+        """Piirtää pelaajan näytölle."""
+        self.window.blit(self.monster_im, (self.player['x'] * 50, self.player['y'] * 50))
+
+
+    def move_player(self, dx: int, dy: int) -> None:
+        """Siirtää pelaajan (mikäli haluttu ruutu ei ole seinää) ja suorittaa mahdollisen komennon (kolikon / oven kohdalla)"""
+
+        new_x = self.player['x'] + dx
+        new_y = self.player['y'] + dy
+
+        # pelaaja siirtyy tyhjään ruutuun.
+        if self.rooms[self.current_room][new_y][new_x] == 0:
+            self.player['x'] = new_x
+            self.player['y'] = new_y
+
+        # pelaaja siirtyy ruutuun jossa on muisto. muisto katoaa ja pelaaja saa pisteen.
+        elif self.rooms[self.current_room][new_y][new_x] == 2:
+            self.player['x'] = new_x
+            self.player['y'] = new_y
+            self.rooms[self.current_room][new_y][new_x] = 0
+            self.memories += 1
+            print(self.memories)
+
+        # pelaaja yrittää siirtyä oviruutuun, päästetään vain jos kaikki muistot on kerätty
+        elif self.rooms[self.current_room][new_y][new_x] == 3:
+            if self.memories == self.memory_counts[self.current_room]:
+                print("jee")
 
 
     def main_loop(self) -> None:
@@ -104,14 +153,13 @@ class Game:
             self.handle_events()
             self.window.fill((100, 100, 100))
             self.draw_room()
-            self.player.draw(self.window, self.monster_im)
+            self.draw_player()
             pg.display.flip()
 
-            self.clock.tick(144)
+            self.dt = self.clock.tick(144)
 
 
 def main() -> None:
-    pg.init()
     Game()
 
 main()
