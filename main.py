@@ -1,11 +1,19 @@
-import pygame as pg
-
-
 ### NOTE: Peliprojektini vuoden 2025 Ohjelmoinnin jatkokurssia varten.
 ###       Pelissä pelaat musitinsa menettänyttä hahmoa, jonka täytyy löytää
 ###       kaikki kadonneet muistot paetakseen ulos. Lisäksi pelaajan on
 ###       voitettava robottivartijat, jotka yrittävät estää sinua keräämästä
 ###       muistoja.
+
+import pygame as pg
+
+### Tässä ovat tärkeimmät asetukset, määriteltynä vakioina, jotta niiden muuttaminen olisi helpompaa
+
+SCREEN_WIDTH: int       = 1920  # näytön leveys pikseleinä
+SCREEN_HEIGHT: int      = 1080  # näytön korkeus pikseleinä
+GRID_SIZE: int          = 50    # yhden ruudun koko pikseleinä
+BULLET_SPEED: float     = 4.0   # luodin nopeuden kerroin, pienempi luku hidastaa luotia ja suurempi nopeutta§a
+ENEMY_RELOAD_TIME: int  = 1500  # kuinka nopeasti viholliset ampuvat, pienempi numero johtaa nopeampaan tuleen
+FIRST_ROOM: int         = 0     # mistä huoneesta peli aloittaa (voit asettaa arvon 1 tai 2 hypätäksesi suoraan kyseiseen huoneeseen)
 
 
 class Game:
@@ -15,10 +23,10 @@ class Game:
 
         self.load_images()
         self.clock = pg.time.Clock()
-        self.grid_size = 50             # yhden ruudun leveys pikseleinä
+        self.grid_size = GRID_SIZE
         
-        self.w_window = 1920
-        self.h_window = 1080
+        self.w_window = SCREEN_WIDTH
+        self.h_window = SCREEN_HEIGHT
         self.window = pg.display.set_mode((self.w_window, self.h_window))
 
         game_win_w = 22 * self.grid_size
@@ -26,6 +34,7 @@ class Game:
         space_w = (self.w_window - game_win_w) // 2
         space_h = (self.h_window - game_win_h) // 2
         self.game_window = self.window.subsurface((space_w, space_h), (game_win_w, game_win_h))
+        self.game_window.set_alpha(1)
 
         ui_window_w = space_w - 50
         ui_window_h = self.h_window - (space_h * 2)
@@ -35,6 +44,7 @@ class Game:
         self.font_health = pg.font.SysFont('Iosevka', 48)
 
         self.dt = 0    # asetetaan jokin arvo muuttujalle, jotta alustusfunktiot toimivat
+        self.transition = False
 
         self.start_game()
 
@@ -128,7 +138,7 @@ class Game:
     def init_data(self) -> None:
         """Alustetaan uuden huoneen datat"""
         self.memory_counts = [4, 0, 0]      # muistojen määrä jokaisessa huoneessa. yritin ensin tehdä luokan mutta koodista tuli liian monimutkaista, joten tämä on nyt kompromissi.
-        self.current_room = 0
+        self.current_room = FIRST_ROOM
         self.memories = 0
         self.bullets: list[dict[str, pg.Vector2|float|str]] = []
 
@@ -178,7 +188,7 @@ class Game:
                 
                 # jos ruudun koodi on 1, se on osa seinää (jolloin kohdalle piirretään koko ruudun täyttävä neliö)
                 if self.rooms[self.current_room][i][j] == 1:
-                    pg.draw.rect(self.game_window, (0,0,0), pg.rect.Rect(j*self.grid_size, i*self.grid_size, self.grid_size, self.grid_size))
+                    pg.draw.rect(self.game_window, (106, 120, 136), pg.rect.Rect(j*self.grid_size, i*self.grid_size, self.grid_size, self.grid_size))
                 
                 # jos ruudun koodi on 2, se on kolikko, joten kohdalle piirretään kolikkokuva
                 elif self.rooms[self.current_room][i][j] == 2:
@@ -201,6 +211,8 @@ class Game:
         new_y = self.player['y'] + dy
 
         # pelaaja siirtyy tyhjään ruutuun tai vihollisen päälle.
+        # tämä on vähän kompromissi, vihollinen ei pysty ampumaan jos sen päällä seisoo mutta pelaaja pystyy ampumaan "sisäänsä",
+        # joten näin voi tuhota vihollisen joutumatta sen tuleen (koska vihollinen ei pysty samaan)
         if self.rooms[self.current_room][new_y][new_x] == 0 or self.rooms[self.current_room][new_y][new_x] == 4:
             self.player['x'] = new_x
             self.player['y'] = new_y
@@ -216,10 +228,11 @@ class Game:
         # pelaaja yrittää siirtyä oviruutuun, päästetään vain jos kaikki muistot on kerätty
         elif self.rooms[self.current_room][new_y][new_x] == 3:
             if self.memories == self.memory_counts[self.current_room]:
-                print("jee")
+                self.switch_room()
 
 
     def shoot(self, start: tuple[int, int], direction: pg.Vector2, shooter: str) -> None:
+        """Ampuu uuden luodin"""
         print(start, direction)
         self.bullets.append({
             'x': start[0],
@@ -230,6 +243,7 @@ class Game:
 
 
     def draw_enemies(self) -> None:
+        """Piirtää viholliset näytölle"""
         for enemy in [e for e in self.enemies if e['alive']]:
             self.game_window.blit(self.robo_im, (enemy['x'] * 50, enemy['y'] * 50))
 
@@ -240,7 +254,7 @@ class Game:
         # haetaan ensin kaikki elossa olevat viholliset
         for enemy in [e for e in self.enemies if e['alive']]:
             # jos edellisestä ampumakerrasta on mennyt yli 2000 iskua, voi vihollinen ampua uudelleen
-            if pg.time.get_ticks() - enemy['last_shot'] > 2000:
+            if pg.time.get_ticks() - enemy['last_shot'] > ENEMY_RELOAD_TIME:
                 # luodaan vektori vihollisesta kohti pelaajaa, ja varmistetaan, ettei vektori ole nollavektori
                 vec_to_player = pg.Vector2(self.player['x'] - enemy['x'], self.player['y'] - enemy['y'])
                 
@@ -280,8 +294,8 @@ class Game:
             has_hit = ''
 
             # siirretään luotia
-            self.bullets[i]['x'] += self.bullets[i]['direction'].x * 4
-            self.bullets[i]['y'] += self.bullets[i]['direction'].y * 4
+            self.bullets[i]['x'] += self.bullets[i]['direction'].x * BULLET_SPEED
+            self.bullets[i]['y'] += self.bullets[i]['direction'].y * BULLET_SPEED
 
             # lasketaan ruutu, jossa luoti sillä hetkellä on
             grid_x = int(bullet['x'] // self.grid_size)
@@ -298,7 +312,7 @@ class Game:
                 print(self.player['health'])
             
             # selvitetään sitten, osuiko johonkin viholliseen
-            for enemy in self.enemies:
+            for enemy in [e for e in self.enemies if e['alive']]:
                 if grid_x == enemy['x'] and grid_y == enemy['y'] and bullet['shooter'] == 'player':
                     self.rooms[self.current_room][grid_y][grid_x] = 0
                     enemy['alive'] = False
@@ -320,28 +334,63 @@ class Game:
 
 
     def update_ui(self) -> None:
-        text_memories = self.font_memories.render(f"MUISTOT:    {self.memories} / {self.memory_counts[self.current_room]}", True, 'green')
-        self.ui_window.blit(text_memories, (0,0))
+        # näytetään pelaajalle kerättyjen muistojen määrä
+        pg.draw.rect(self.ui_window, (143, 114, 90), pg.Rect(0,0, self.ui_window.get_width(), 100))
+        memory_str = f"MUISTOT    {self.memories} / {self.memory_counts[self.current_room]}"
+        memory_txt = self.font_memories.render(memory_str, True, 'green')
+        self.ui_window.blit(memory_txt, (10,30))
 
-        text_health = self.font_health.render((f"<3 {self.player['health']} / 10"), True, 'red')
-        self.ui_window.blit(text_health, (0, 100))
+        pg.draw.rect(self.ui_window, (143, 114, 90), pg.Rect(0,150, self.ui_window.get_width(), 150))
+        health_str = f"ELÄMÄPISTEET: {self.player['health']} / 10"
+        health_txt = self.font_health.render(health_str, True, 'red')
+        self.ui_window.blit(health_txt, (10, 180))
+
+
+    def switch_room(self) -> None:
+        if not self.transition:
+            self.transition = True
+            if self.current_room == 2:
+                pg.quit()
+                exit()
+            else:
+                self.current_room += 1
+
+        current_alpha = self.game_window.get_alpha()
+
+        if current_alpha == 0:
+            self.transition = False
+            return
+        else:
+            self.game_window.set_alpha(current_alpha - 0.01)
 
 
 
     def main_loop(self) -> None:
+        """Aloittaa pääsilmukan."""
         while True:
             self.handle_events()
-            self.window.fill((100, 100, 100))
-            self.draw_room()
-            self.draw_player()
-            self.draw_enemies()
-            self.check_enemy_shooting()
-            self.check_hits()
-            self.draw_bullets()
-            self.update_ui()
+
+            self.game_window.fill((142, 145, 103))
+           
+            if not self.transition:
+                self.draw_room()
+                self.draw_player()
+                self.draw_enemies()
+                self.draw_bullets()
+            
+                self.check_enemy_shooting()
+                self.check_hits()
+                self.update_ui()
+            else:
+                self.switch_room()
+
             pg.display.flip()
 
             self.dt = self.clock.tick(60)
+
+
+    def jee(self) -> None:
+        self.main_loop()
 
 
 def main() -> None:
