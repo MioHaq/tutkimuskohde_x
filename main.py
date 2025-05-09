@@ -4,16 +4,21 @@
 ###       voitettava robottivartijat, jotka yrittävät estää sinua keräämästä
 ###       muistoja.
 
+### NOTE: Pelissä oli alkuperäisen suunnitelman mukaan tarkoitus olla mm. tarinaa
+###       ja laajempi käyttöliittymä. Näitä en kuitenkaan saanut toimimaan ja lopulta
+###       meni hermot niin tässä nyt hyvin yksinkertainen malli pelistä!
+
 import pygame as pg
 
 ### Tässä ovat tärkeimmät asetukset, määriteltynä vakioina, jotta niiden muuttaminen olisi helpompaa
 
-SCREEN_WIDTH: int       = 1920  # näytön leveys pikseleinä
-SCREEN_HEIGHT: int      = 1080  # näytön korkeus pikseleinä
-GRID_SIZE: int          = 50    # yhden ruudun koko pikseleinä
-BULLET_SPEED: float     = 4.0   # luodin nopeuden kerroin, pienempi luku hidastaa luotia ja suurempi nopeutta§a
-ENEMY_RELOAD_TIME: int  = 1500  # kuinka nopeasti viholliset ampuvat, pienempi numero johtaa nopeampaan tuleen
-FIRST_ROOM: int         = 0     # mistä huoneesta peli aloittaa (voit asettaa arvon 1 tai 2 hypätäksesi suoraan kyseiseen huoneeseen)
+SCREEN_WIDTH: int       = 1920      # näytön leveys pikseleinä
+SCREEN_HEIGHT: int      = 1080      # näytön korkeus pikseleinä
+GRID_SIZE: int          = 50        # yhden ruudun koko pikseleinä
+BULLET_SPEED: float     = 4.0       # luodin nopeuden kerroin, pienempi luku hidastaa luotia ja suurempi nopeutta§a
+ENEMY_RELOAD_TIME: int  = 1500      # kuinka nopeasti viholliset ampuvat, pienempi numero johtaa nopeampaan tuleen
+FIRST_ROOM: int         = 0         # mistä huoneesta peli aloittaa (voit asettaa arvon 1 tai 2 hypätäksesi suoraan kyseiseen huoneeseen)
+FONT_NAME: str          = 'Arial'   # käyttöliittymän piirtämiseen käytettävä fontti
 
 
 class Game:
@@ -40,12 +45,11 @@ class Game:
         ui_window_h = self.h_window - (space_h * 2)
         self.ui_window = self.window.subsurface((space_w + game_win_w + 25, space_h), (ui_window_w, ui_window_h))
 
-        self.font_memories = pg.font.SysFont('Iosevka', 48)
-        self.font_health = pg.font.SysFont('Iosevka', 48)
+        self.font_memories = pg.font.SysFont(FONT_NAME, 36)
+        self.font_health = pg.font.SysFont(FONT_NAME, 36)
 
         self.dt = 0    # asetetaan jokin arvo muuttujalle, jotta alustusfunktiot toimivat
-        self.transition = False
-
+        
         self.start_game()
 
     
@@ -84,15 +88,15 @@ class Game:
         room1: list[list[int]] = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 4, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 4, 0, 0, 2, 0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 4, 0, 1, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 4, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 2, 1],
             [1, 0, 2, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -100,20 +104,20 @@ class Game:
         ]
         room2: list[list[int]] = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-            [1, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1],
-            [1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-            [1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 4, 0, 1],
-            [1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1]
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 4, 0, 0, 1, 0, 1, 0, 0, 0, 4, 0, 1],
+            [1, 0, 2, 0, 1, 0, 0, 1, 0, 0, 0, 2, 0, 1, 0, 1, 0, 2, 0, 0, 2, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 4, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 0, 0, 4, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+            [1, 4, 0, 0, 1, 0, 0, 1, 0, 0, 4, 0, 0, 1, 0, 1, 0, 1, 0, 2, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 0, 1, 0, 1, 0, 1, 0, 0, 4, 1],
+            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 4, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 4, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3],
+            [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
 
         self.rooms = [room0, room1, room2]
@@ -136,15 +140,16 @@ class Game:
 
 
     def init_data(self) -> None:
-        """Alustetaan uuden huoneen datat"""
-        self.memory_counts = [4, 0, 0]      # muistojen määrä jokaisessa huoneessa. yritin ensin tehdä luokan mutta koodista tuli liian monimutkaista, joten tämä on nyt kompromissi.
+        """Alustetaan pelin käyttämää dataa"""
+        self.memory_counts = [4, 5, 6]      # muistojen määrä jokaisessa huoneessa. yritin ensin tehdä luokan mutta koodista tuli liian monimutkaista, joten tämä on nyt kompromissi.
+        self.start_positions = [(5, 1), (17, 1), (6, 1)]
         self.current_room = FIRST_ROOM
         self.memories = 0
         self.bullets: list[dict[str, pg.Vector2|float|str]] = []
 
         self.player = {
-            'x': 5,
-            'y': 3,
+            'x': self.start_positions[self.current_room][0],
+            'y': self.start_positions[self.current_room][1],
             'health': 10
         }
 
@@ -309,7 +314,10 @@ class Game:
             if grid_x == self.player['x'] and grid_y == self.player['y'] and bullet['shooter'] == 'enemy':
                 self.player['health'] -= 1
                 has_hit = 'player'
-                print(self.player['health'])
+
+                if self.player['health'] <= 0:
+                    pg.quit()
+                    exit()
             
             # selvitetään sitten, osuiko johonkin viholliseen
             for enemy in [e for e in self.enemies if e['alive']]:
@@ -319,13 +327,14 @@ class Game:
                     has_hit = 'enemy'
                     break
 
+            # poistaa luodin, joka osui (jotta yhdellä luodilla ei pysty ampumaan useampaa vihollista / seinien läpi)
             if has_hit != '':
                 self.bullets.pop(i)
-                print(f"osui {has_hit}")
                 break
 
 
     def draw_bullets(self) -> None:
+        """Piirtää luodit ruudulle, pelaajan ampumat oransseina ja vihollisen ampumat punaisina."""
         for bullet in self.bullets:
             if bullet['shooter'] == 'player':
                 pg.draw.circle(self.game_window, 'orange', (int(bullet['x']), int(bullet['y'])), 6)
@@ -334,35 +343,31 @@ class Game:
 
 
     def update_ui(self) -> None:
+        """Piirtää käyttöliittymän (eli kerättyjen musitojen ja jäljellä olevien elämäpisteiden määrän)"""
         # näytetään pelaajalle kerättyjen muistojen määrä
         pg.draw.rect(self.ui_window, (143, 114, 90), pg.Rect(0,0, self.ui_window.get_width(), 100))
         memory_str = f"MUISTOT    {self.memories} / {self.memory_counts[self.current_room]}"
         memory_txt = self.font_memories.render(memory_str, True, 'green')
         self.ui_window.blit(memory_txt, (10,30))
 
-        pg.draw.rect(self.ui_window, (143, 114, 90), pg.Rect(0,150, self.ui_window.get_width(), 150))
-        health_str = f"ELÄMÄPISTEET: {self.player['health']} / 10"
+        # näytetään pelaajalle jäljellä olevien elämäpisteiden määrä
+        pg.draw.rect(self.ui_window, (143, 114, 90), pg.Rect(0,150, self.ui_window.get_width(), 100))
+        health_str = f"ELÄMÄT    {self.player['health']} / 10"
         health_txt = self.font_health.render(health_str, True, 'red')
         self.ui_window.blit(health_txt, (10, 180))
 
 
     def switch_room(self) -> None:
-        if not self.transition:
-            self.transition = True
-            if self.current_room == 2:
-                pg.quit()
-                exit()
-            else:
-                self.current_room += 1
-
-        current_alpha = self.game_window.get_alpha()
-
-        if current_alpha == 0:
-            self.transition = False
-            return
+        """Vaihtaa seuraavaan huoneeseen (ja uudelleenasettaa tarvittavat muuttujat). Sulkee pelin viimeisen huoneen jälkeen."""
+        if self.current_room == 2:
+            pg.quit()
+            exit()
         else:
-            self.game_window.set_alpha(current_alpha - 0.01)
+            self.current_room += 1
 
+        self.init_enemies()
+        self.memories = 0
+        self.player['x'], self.player['y'] = self.start_positions[self.current_room]
 
 
     def main_loop(self) -> None:
@@ -372,25 +377,18 @@ class Game:
 
             self.game_window.fill((142, 145, 103))
            
-            if not self.transition:
-                self.draw_room()
-                self.draw_player()
-                self.draw_enemies()
-                self.draw_bullets()
-            
-                self.check_enemy_shooting()
-                self.check_hits()
-                self.update_ui()
-            else:
-                self.switch_room()
+            self.draw_room()
+            self.draw_player()
+            self.draw_enemies()
+            self.draw_bullets()
+        
+            self.check_enemy_shooting()
+            self.check_hits()
+            self.update_ui()
 
             pg.display.flip()
 
             self.dt = self.clock.tick(60)
-
-
-    def jee(self) -> None:
-        self.main_loop()
 
 
 def main() -> None:
